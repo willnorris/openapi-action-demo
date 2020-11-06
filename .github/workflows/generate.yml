@@ -1,0 +1,27 @@
+name: Generate Libraries
+
+on:
+  # For now, just run on demand.  This could instead be based on a schedule or
+  # in response to a GitHub event.
+  workflow_dispatch: {}
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # use the example from the openapi-generator README
+      - run: |-
+          docker run --rm -v "${PWD}:/local" openapitools/openapi-generator-cli generate \
+          -i https://raw.githubusercontent.com/openapitools/openapi-generator/master/modules/openapi-generator/src/test/resources/3_0/petstore.yaml \
+          -g go \
+          -o "/local/go"
+
+      - run: |-
+          git config user.name "Automated"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          timestamp=$(date -u)
+          git commit -m "update generated libraries: ${timestamp}" || exit 0
+          git push
